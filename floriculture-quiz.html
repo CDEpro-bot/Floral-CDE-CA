@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floriculture CDE Test Bank</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--ink:#2b2a28;--muted:#6f6a62;--accent:#b0476b;--accent2:#5c7a4a;--line:#e3ddd3;--good:#3f8a4f;--goodbg:#e6f3e8;--bad:#b23b3b;--badbg:#f9e5e5}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:780px;margin:0 auto;padding:20px 16px 60px}
+header{text-align:center;margin-bottom:18px}
+header h1{margin:0;font-size:1.7rem;color:var(--accent)}
+header p{margin:4px 0 0;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+h2{margin:0 0 12px;font-size:1.15rem}
+.cats label,.modes label{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.cats label:hover,.modes label:hover{background:#faf7f2}
+.cats .count{margin-left:auto;color:var(--muted);font-size:.9rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--accent);color:#fff;font-weight:600}
+button.secondary{background:#ece6dc;color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted);font-size:.95rem;flex-wrap:wrap;gap:8px}
+.timer{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.timer.low{color:var(--bad)}
+.progress{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.progress div{height:100%;background:var(--accent2);width:0}
+.tag{display:inline-block;font-size:.78rem;background:#f1e6ea;color:var(--accent);padding:2px 10px;border-radius:20px;margin-bottom:8px}
+.qtext{font-size:1.12rem;font-weight:600;margin:0 0 16px}
+.opt{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--line);padding:12px 14px;margin-bottom:9px;font-weight:500}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:#fbf1f4}
+.opt.correct{border-color:var(--good);background:var(--goodbg)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg)}
+.opt:disabled{opacity:1;cursor:default}
+.letter{font-weight:700;margin-right:8px;color:var(--muted)}
+.feedback{margin:6px 0 14px;font-weight:600}
+.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:8px}
+.score{font-size:2.6rem;font-weight:800;color:var(--accent);text-align:center;margin:6px 0}
+.sub{text-align:center;color:var(--muted);margin-bottom:14px}
+.breakdown div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+.review-item{border-top:1px solid var(--line);padding:12px 0}
+.review-item .q{font-weight:600}
+.review-item .yours{color:var(--bad)}
+.review-item .ans{color:var(--good)}
+.hidden{display:none}
+.small{font-size:.88rem;color:var(--muted)}
+input[type=number]{font:inherit;width:80px;padding:8px;border:1px solid var(--line);border-radius:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🌸 Floriculture CDE Test Bank</h1>
+  <p>250-question bank &middot; Nov 2021</p>
+</header>
+
+<!-- SETUP -->
+<section id="setup">
+  <div class="card">
+    <h2>1. Choose topics</h2>
+    <div class="cats" id="cats"></div>
+    <div class="row"><button class="secondary" id="allBtn">Select all</button><button class="secondary" id="noneBtn">Clear</button></div>
+  </div>
+  <div class="card">
+    <h2>2. Choose a mode</h2>
+    <div class="modes">
+      <label><input type="radio" name="mode" value="practice" checked> <span><b>Practice</b> — instant feedback after every question</span></label>
+      <label><input type="radio" name="mode" value="contest"> <span><b>Contest simulation</b> — 25 random questions, 30-minute timer, 4 points each, scored at the end</span></label>
+    </div>
+    <div class="row" id="practiceOpts">
+      <label class="small">Number of questions (blank = all selected):</label>
+      <input type="number" id="numQ" min="1" placeholder="All">
+      <label class="small"><input type="checkbox" id="shuffle" checked> Shuffle</label>
+    </div>
+  </div>
+  <div class="card" style="text-align:center">
+    <button id="startBtn">Start</button>
+    <p class="small" id="poolInfo"></p>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="hidden">
+  <div class="card">
+    <div class="topbar"><span id="counter"></span><span class="timer" id="timer"></span><span id="liveScore"></span></div>
+    <div class="progress"><div id="bar"></div></div>
+    <span class="tag" id="qcat"></span>
+    <p class="qtext" id="qtext"></p>
+    <div id="opts"></div>
+    <div class="feedback" id="fb"></div>
+    <div class="nav">
+      <button class="secondary" id="prevBtn">← Back</button>
+      <button class="secondary" id="quitBtn">Quit</button>
+      <button id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="hidden">
+  <div class="card">
+    <h2 style="text-align:center">Results</h2>
+    <div class="score" id="finalScore"></div>
+    <div class="sub" id="finalSub"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <div class="row" style="justify-content:center;margin-top:18px">
+      <button id="retryMissed">Retry missed</button>
+      <button class="secondary" id="homeBtn">New quiz</button>
+    </div>
+  </div>
+  <div class="card"><h2>Review missed questions</h2><div id="review"></div></div>
+</section>
+</div>
+
+<script>
+/* ============================================================
+   QUESTION BANK
+   Format: [number, "question", "answer letter", ...options]
+   True/False questions: [number, "question", "T" or "F"]
+   To fix an answer, just change the letter.
+   ============================================================ */
+const BANK = [
+[1,"What is the most important factor in postharvest flower care and handling?","b","The production of Ethylene","Temperature Management","Processing the flowers","Floral preservatives"],
+[2,"The initial treatment of fresh flowers at each level of distribution is referred to as:","a","Processing","Plugging","Conditioning","Temperature management"],
+[3,"According to the Society of American Florists, research has shown that flowers cut underwater may not be beneficial unless every flower is recut in fresh water due to contamination from stem cell remnants, dirt, and debris.","T"],
+[4,"Stem cuttings on stressed or wilting flowers by the wholesaler, retailer, or final consumer should be dry-cut (not under water) because this helps restore turgidity to the stems quickly.","T"],
+[5,"What tool do you use to remove thorns?","b","Floral Shears","Dethorner or rose stripper","Wire Cutters","Underwater stem cutter"],
+[6,"What are floral preservatives?","c","A Clorox bleach solution","A mixture of Sugars and Lipids","A combination of sugars, a biocide, and an acidifier","A solution of vitamins, minerals, and sugars"],
+[7,"Carbohydrates in the form of glucose are the main source of nutrition for flowers.","T"],
+[8,"Carbohydrates support the metabolic activities that continue during the post-harvest period.","T"],
+[9,"Biocides are a substance or other agent that destroys harmful microorganisms that will grow as cut flowers decay.","T"],
+[10,"Commercial floral preservatives also contain acidifiers for increasing the pH level of the water.","F"],
+[11,"Special care treatments used prior to floral preservatives that help to extend the life of cut flowers are called:","a","Pretreatments","Post-treatments","Post-harvest","pH levels"],
+[12,"What should you use only for sanitation purposes of washing buckets, containers and tools?","c","Silver Thiosulfate","Ethylbloc","Clorox bleach","Floralife"],
+[13,"Citric acid treatment speeds up the intake of water, helping to prevent bent neck, as well as decreases pH of the water.","T"],
+[14,"Humidity refers to the amount or degree of moisture in the air. The goal is at least 80% and above for cut flower storage.","T"],
+[15,"Ethylene is naturally produced by cut flowers and foliage during various stages of the life cycle, especially during senescence.","T"],
+[16,"Care tags can be attached to floral designs to educate the final consumer on how to care for the flowers or plants and therefore increase longevity and enjoyment.","T"],
+[17,"Proper refrigeration, including appropriate temperature and humidity, is essential for increasing vase life of cut flowers and foliage.","T"],
+[18,"Keeping flowers cool slows down respiration rate and maximizes vase life.","T"],
+[19,"Stem blockage can be caused by an air embolism, bacteria, fungus, or dissolved mineral solids in the vase water.","T"],
+[20,"According to the Society of American Florists, cold and warm water are equally effective in extending longevity when combined with a flower preservative.","T"],
+[21,"What does TDS stand for?","a","Total Dissolved Solids","Total Distributed Supplements","Total Dissipated Salts","None of the above"],
+[22,"What is the ideal pH level for cut flowers?","b","6-7","3-4.5","1-1.5","7-9"],
+[23,"Care and Handling refers to what?","c","Longer cut life or vase life","Levels of distribution from grower to consumer","Procedures to extend the vase life of cut flowers and foliage","Proper flower delivery procedures"],
+[24,"What are the 'chain of life' levels of distribution for cut flowers according to the Society of American Florists?","a","Grower, Shipper, Wholesaler, Retailer, Consumer","Grower, Wholesaler, Shipper, Retailer, Consumer","Wholesaler, Shipper, Grower, Consumer, Retailer","Retailer, Wholesaler, Grower, Shipper, Consumer"],
+[25,"The initial treatment of flowers at the grower level is to bunch the flowers, recut stems, and immediately place in conditioning solution prior to shipping.","T"],
+[26,"Flower food, such as Floralife, contains which of the following?","d","A bio inhibitor or biocide","Sugar","Acidifier","All of the Above"],
+[27,"When the xylem and phloem get clogged with bacteria what happens to the vase life of the flower?","c","Vase life stays the same","Vase life increases","Vase life decreases","Nothing"],
+[28,"The resistance to chemical change in the alkalinity of water is called?","d","TDS","Wilt sensitive","Dry prone","Buffering capacity"],
+[29,"Ethylene, which causes senescence, is known as:","b","a floral preservative","an aging hormone gas","a bacterium","a rehydration solution"],
+[30,"Which of the following steps in processing would you perform first when you receive your shipment of flowers?","c","Place in conditioning solution","Cut and clean stems","Debunch","Let the plants drink for an hour at room temperature"],
+[31,"What is the term used to indicate that flowers have been placed into the cooler, after processing is completed?","b","Debunch","Harden","Thicken","Toughen"],
+[32,"Which is the ideal temperature range for flower shipping and cooling?","b","28-32 Degrees F","33-38 Degrees F","39-46 Degrees F","Above 50 Degrees F"],
+[33,"Tropical flowers require higher temperatures than a typical flower. What degree range is preferred?","b","42-55 Degrees F","55-75 Degrees F","80-95 Degrees F","95-105 Degrees F"],
+[34,"Which of these products is a sealer solution that florists use to maintain the condition of their flowers and foliage to keep them fresh longer by locking in moisture?","d","Ethylbloc","Chlorine Tablets","Floralife","Crowning Glory"],
+[35,"Growers use a postharvest technique to \"strengthen\" flowers called pulsing immediately after harvesting. What does pulsing mean?","c","Placing flowers in a cooler","Placing flowers in water","Placing flowers into a sugar solution","Removing all lower foliage from the stem"],
+[36,"Because flowers have higher turgor pressure in the morning and evening, it is preferred to harvest during mid-day hours.","F"],
+[37,"To help keep the humidity in shipping boxes near 100%, foliage is wrapped in plastic sheeting and the inside surfaces of the boxes may be coated with wax.","T"],
+[38,"When a plant grows towards the light it is called:","b","Geotropism","Phototropism","Tropism","Distortion"],
+[39,"The growth of the parts of plants with respect to the force of gravity:","a","Geotropism","Phototropism","Tropism","Distortion"],
+[40,"What does the term vase life refer to?","b","Time period a glass vase will last in inventory","Time period fresh flowers retain their appearance in a vase","Life cycle of a cut flower","Days to harvest"],
+[41,"Commercial rose thorn and leaf strippers should be used with care to avoid damaging the exterior of the stem.","T"],
+[42,"Transpiration is water loss in flowers and can be prevented with all of the methods listed except:","d","Hydration","Refrigeration","Humidity","Sunlight"],
+[43,"What is the optimal humidity for storing cut flowers?","d","0%","60% and below","70%","80% and above"],
+[44,"Cut flowers are placed in specially designed cardboard boxes with no holes in it for transportation. This is called dry-packing.","F"],
+[45,"Which of the following is not an example of proper processing techniques?","c","Clean/Sanitized Buckets","Recut/recondition immediately","Leave excess foliage for design usage later","None of the Above"],
+[46,"Which is the primary reason for keeping buckets clean?","c","Prevent blockage in xylem","Help the flowers continue to grow","Prevent bacteria or fungal growth","To balance the pH of the water"],
+[47,"Flower preservatives should be used for this primary reason:","d","Keep the water clear","Prevent blockage in phloem","Prevent bacteria growth","To extend the vase life of the flowers"],
+[48,"Damaged or excess foliage below the water level will decompose, increasing growth of microorganisms and the production of ethylene.","T"],
+[49,"What is one tangible artifact from history that tells us flowers have been brought indoors for enjoyment for many centuries?","a","Tapestries","Cameras","Picture frames","Hieroglyphics"],
+[50,"Which of the following is a container not used in the Ancient Egyptian Period?","c","Wide-Mouth bowls","Rounded basins","Posy Holders","Spouted vases"],
+[51,"What important floral design icon, which holds flowers, fruits and other materials, was introduced in the Greek period and is still used today?","d","Basket","Glass Vases","Wide-Mouth Bowls","The Cornucopia"],
+[52,"What common flowers were used in the Ancient Egyptian Period?","b","Orchids, Hydrangeas, Dahlias","Jasmine, Lilies, Lotus","Tulips, Daffodils, Baby's Breath","Succulents"],
+[53,"What were wreaths commonly used for during the Greek Period?","d","As decoration","As clothing","As gifts","All of the above"],
+[54,"What was a common example of fruits used in floral design in the Roman & Greek Periods?","a","Acorns, Berries, Cones, Grapes, Pomegranates","Strawberries, Apples, Bananas, Mangos","Walnuts, Kiwis, Pineapples, Coconuts","All of the Above"],
+[55,"Which of the following items is not typical for the Greek Period?","b","Wreaths","Vases","Loose petals","Garlands"],
+[56,"What was the main floral style of the Byzantine period?","a","Symmetrical","Garden","Western line","Botanical"],
+[57,"What era do we know the least about in floral art history?","d","Renaissance","Baroque Period","Victorian Era","Middle Ages"],
+[58,"In the Middle Ages what were flowers used for?","d","Food","Medicine","Drinks","All of the above"],
+[59,"During this time period in Europe after the Middle Ages, art represented religious history. A great emphasis was placed on flower symbolism.","a","The Renaissance Period","Middle Ages","Byzantine Period","Roman Period"],
+[60,"During this time period, characterized by elaborate ornamentation and curved lines, art became accessible to the middle class and paintings from this period show flower arrangements in everyday situations.","c","Egyptian Period","Greek Period","Baroque Period","French Period"],
+[61,"Large flamboyant arrangements were a result of religious reform that took place during the Baroque time period. Flower paintings changed to represent this floral style, which is also known as what style?","d","Western Style","Japanese Style","Swiss-German Style","Dutch-Flemish Style"],
+[62,"The \"Grand Era\" flourished during the 17th & 18th centuries in France. The emphasis of floral design was on classic form, refinement and elegance. Which time period was this?","a","The French Period","Baroque Period","English-Georgian Period","Greek Period"],
+[63,"During this time period the fragrance of flowers was the first prerequisite in a bouquet. It was believed that its perfume would rid the air of contagious and infectious diseases.","c","Baroque Period","Egyptian Period","English-Georgian Period","Victorian Period"],
+[64,"A nosegay is a small bouquet used to carry the sweet scents of flowers and give relief from the smells of an unsanitary society. What is another name for these small nosegay bouquets?","a","Tussie-mussies","Bosom Bottle","Handheld Bouquet","Aroma Bouquet"],
+[65,"In this era, Floral Design was taught and recognized as an art. It was a time of great enthusiasm for flowers, plants and gardening. What is this era?","c","English-Georgian Era","French Era","Victorian Era","Egyptian Era"],
+[66,"While nosegays were fashionable, they were cumbersome during activities such as eating or dancing. To overcome these problems which type of flower holder was invented?","b","Bouquet Holder","Posy Holder","Bud Vase","Trumpet Vase"],
+[67,"Contemporary designs are floral styles that change with the times. What is another term for contemporary designs?","b","Classic","Modernistic","Bizarre","Western"],
+[68,"What design style refers to floral arrangements that are generally mass bouquet designs, reminiscent of the European mass styles that continue in popularity and are in fashion due to their simplicity and elegance?","c","Traditional Design","Contemporary Design","Classic Design","Mille De Fleur Design"],
+[69,"Popular in the 17th & 18th centuries in Europe, \"A Thousand Flowers\" Design refers to having an all-over multicolored pattern of many flowers. This design is also referred to as:","d","Advanced Design","Experimental Design","European Design","Mille De Fleur Design"],
+[70,"Originating in Austria and Germany during the early 1800s, a floral arrangement that is generally compact, rounded or slightly conical in shape and consists of patterns, especially concentric rings of flowers, is what type of design?","a","Biedermeier Design","French Design","Victoria Design","Phoenix Design"],
+[71,"Waterfall designs initially created for bridal bouquets in Europe and the United States were derived from paintings that depicted this style during which time period?","b","Art Deco","Art Nouveau Period","Federal Period","Romantic Era"],
+[72,"The Art Deco time period utilized asymmetrical arrangements and emphasized:","a","Shapes, Angles, Geometric Lines","Mass, Filler, Form","Horizontal, Vertical, Circular","Messy, Round, Organic"],
+[73,"This design, which often included tall flowering branches with a base of clustered flowers, was inspired by the ancient Egyptian mythological bird that is a symbol of renewal and immortality.","d","Renewal Design","Immortality Design","Fire Design","Phoenix Design"],
+[74,"Some historians suggest this era made the most significant contribution to establishing the use of plants and flowers in daily life.","d","American Victorian","Art Deco","Colonial Style","Victorian Era"],
+[75,"The style of floral arrangement popular in this era can generally be described as grouping large masses of flowers, foliage, and grasses together to create a compact design with few voids and no obvious center of interest.","d","American Victorian","Art Deco","Colonial Style","Victorian Era"],
+[76,"Containers of this period were highly ornate and showy and were used to hold abundant masses of flowers.","d","American Victorian","Art Deco","Colonial Style","Victorian Era"],
+[77,"The tiered containers characteristic of the Victorian period in Europe and the Romantic era in America, which were popular vases for holding flowers and fruit and used as lavish centerpieces, are called:","c","Ceramic Vase","Compote","Epergne","Posey"],
+[78,"The unstructured, naturalistic designs of this era include the use of a dominant vertical element and the use of a more delicate, horizontally placed element.","c","American Style","American Victorian Style","Chinese Style","Colonial Style"],
+[79,"This style of design is highly formalized and follows strict rules of construction with cut flowers and accessory materials placed in arrangements in a manner reflecting how they are found in nature.","d","American Style","Art Deco","Chinese Style","Japanese Style"],
+[80,"The Early American style of floral design demonstrated that the colonists were:","b","Aristocrats","Avid Gardeners","Hunters & Gatherers","Physicians"],
+[81,"Which of the following is the best description of the style of floral designs in the Colonial period?","b","Hogarth (S curve) style of design with sprays of flowers loose on the table","Rounded symmetrical bouquets with fresh and dried flowers used in combination","Tall, triangular, fan-shaped designs in baskets, cornucopias, and shell shaped containers","Tight designs with short stemmed flowers"],
+[82,"Examples of accessories used in the Colonial time period were:","a","Bibles, books, figurines, period portraits","Jewels, coins, shells, butterflies","Paperweights, oil lamps, Victorian greeting cards","Porcelain figurines, fans, sheet music"],
+[83,"This period is known as the political, social, and decorative formation era in America following the Revolutionary War, and the tendency was to break away from anything reflecting English dominance.","d","American Victorian","Art Deco","Colonial Style","Neoclassicism"],
+[84,"What was the name of one of the early garden clubs which promoted the early growth of the floral industry by providing education, support, and camaraderie?","c","American Institute of Floral Design","California Certified Florists","Society of American Florists","Teleflora"],
+[85,"This term is used to define the style of art with the main theme of having curvilinear lines, often patterned after nature, in the shape of plants or flowers as well as human form.","b","Art Deco","Art Nouveau","Chinese Style","Japanese Style"],
+[86,"The modern asymmetrical bouquet with curving flower stems and branches spilling abundantly was inspired by this era.","b","Art Deco","Art Nouveau","Chinese Style","Japanese Style"],
+[87,"This floral design time period derived from the 1925 Paris World's Fair exhibition called the Exposition Internationale des Arts Decoratifs.","a","Art Deco","Art Nouveau","Chinese Style","Japanese Style"],
+[88,"This style was referred to as \"moderne\" or \"modernistic\" and was popular during the 1920s and 1930s in Europe and the United States.","a","Art Deco","Art Nouveau","Chinese Style","Japanese Style"],
+[89,"A blending of several influences, including the ancient Egyptian and Aztec cultures, the jazz age, the new industrial age, and other aspects of society, is reflected in this style of design.","a","Art Deco","Art Nouveau","Chinese Style","Japanese Style"],
+[90,"In this era, floral designs became more expressive, with both a feeling of movement and a feeling of freedom, incorporating driftwood and many other figurines.","d","Art Deco","Art Nouveau","Changing Contemporary Styles","Free-Form Expression"],
+[91,"In this era, tightly packed designs reminiscent of the colonial style were made in a variety of compotes, baskets, and teacups.","d","Art Nouveau","Changing Contemporary Styles","Free-Form Expression","Geometric Mass Design"],
+[92,"This is the term for floral arrangements highlighting one type of flower in a vase.","a","Monobouquet or Monobotanical design","Monoculture","Monochromatic design","Monochasium"],
+[93,"During the Greek period, wearing of wreaths on the head was quite common. Another term for these head wreaths is:","c","Cornucopia","Lei","Chaplet","Posy"],
+[94,"In Chinese floral arrangements, which of the following is true about the forces of yang and yin, or the harmonious balance of opposites in nature?","a","Yang is the dominant, sturdy, strong, and masculine force and yin is a delicate, more fragile, and feminine force","Yang represents night, dark, winter, and the moon. Yin represents day, light, summer, and the sun","Yang is often depicted in tight buds, delicate flowers, and blossoms. Yin is depicted in tree branches, bamboo, shrubs, and fully open flowers","Yang and Yin appear as artificial and showy in an arrangement"],
+[95,"Which style of design means \"giving life to flowers\"?","a","Ikebana","Egyptian","Western Line","Victorian"],
+[96,"The classic Japanese style of arranging is typically:","b","Tight, rounded, and reminiscent of colonial style","Formal, linear, and gives emphasis to nature and symbolism","Full and overflowing, expressing overabundance","Handheld designs arranged in bouquet holders"],
+[97,"This tool is often used to construct designs in the Japanese style of design.","b","Floral foam","Kenzan","Tape Grid","Wire"],
+[98,"The completed floral design that sits on top of the casket is called:","d","Easel spray","Funeral spray","Full spray","Casket spray"],
+[99,"Each of the following is considered a \"set piece\" except:","d","Wreath","Heart","Cross","Easel spray"],
+[100,"The definition of unity is all of the following except:","c","State of being one","United","A grouping of flowers","Complete in itself"],
+[101,"The easiest way to create repetition in a bouquet is to:","a","Use the same color flowers","Use a variety of textures","Use three types of flowers","Make the bouquet compact"],
+[102,"Harmony refers to:","c","All Elements of Floral design","Music and its parts","The proper relationship between all the elements in a design","How the arrangement looks in a container"],
+[103,"Balance exists as:","c","Normal and Actual","Asymmetrical and Physical","Visual and Physical","Perfect and Near Perfect"],
+[104,"There are four types of visual balance: Symmetrical, Asymmetrical, Radial, and Open.","T"],
+[105,"Physical balance is also called:","b","Strength","Mechanical","Open","Visual"],
+[106,"Balance and proportion are not closely related in floral design.","F"],
+[107,"Balance is the quality of a floral design that gives a sense of:","c","Relaxation","Excitement","Equilibrium","Tranquility"],
+[108,"The simplest form of balance to create and recognize is:","d","Asymmetrical","Open","Radial","Symmetrical"],
+[109,"This type of balance is common in contemporary designs and relies on perceived balance:","d","Radial","Asymmetrical","Symmetrical","Open"],
+[110,"A good rule to determine how tall flowers should be is to:","c","Use the entire length of the stem","Cut the stem in half","1½-2 times the height of container","Measure 12\" from top of flower design to the bottom of the container"],
+[111,"The golden mean refers to:","a","A proportion found in nature, appealing to the eye, to divide an area somewhere between ½ and ⅓","The principle of a perfectly designed floral piece","A designer that has a natural design sense","Principles of design that are used correctly together"],
+[112,"Scale is another word for:","b","Proportion","Size","Relationships","Weighing things"],
+[113,"Scale is measured as:","d","Flowers to container","Flowers to flowers and/or foliage","Arrangement to surroundings","All of the above"],
+[114,"The considerations a designer must think about when creating a design are the size of the table where it will be placed and the room where the design will be placed. This is the principle of:","c","Design","Proportion","Scale","Harmony"],
+[115,"The best way to capture interest in a floral design is through:","a","Focal Point","Good design","Harmony","Color"],
+[116,"Traditionally, the focal point of a floral design is located:","b","At the top of the design","Low in the design near the rim","Right in the center of the design","Any area that feels right"],
+[117,"Generally, emphasis is created when one element differs from all other elements in a design.","T"],
+[118,"The creation of emphasis by using color contrast is:","b","Not recommended in design","The simplest way to create a focal point","Not a principle of design","Incorrect"],
+[119,"Larger and more open blooms can be used to draw the eye because of their weightiness. This is the principle of:","c","Harmony","Scale","Dominance","Balance"],
+[120,"A form flower, like a single protea, would work well to create:","d","Balance","Proportion","Scale","Focal Point"],
+[121,"Methods for creating emphasis include all of the following except:","d","Directional facing","Framing","Isolation","Balance"],
+[122,"Rhythm is:","a","Movement characterized by recurrence of elements of design","The stability of an arrangement","A design element","Not a factor of floral design"],
+[123,"Rhythm can be created through:","d","Repetition","Radiating Lines","Transition and Gradation","All of the above"],
+[124,"Radiation means:","b","Asymmetrical design lines","Lines that branch out from a central axis","Design lines that intersect at several locations","None of the above"],
+[125,"Transition or Gradation in floral design can be accomplished through a pattern in:","d","Color","Size","Spacing","All of the above"],
+[126,"To achieve rhythm, you need to:","a","Be aware of placement of materials in relation to your focal point","Work from the bottom of the design to the top","Know what harmony is","None of the above"],
+[127,"Framing is a technique in which the perimeter of the design fully or partially encloses an area and focuses attention on its contents.","T"],
+[128,"Designers use isolation to create:","c","Balance","Harmony","Dominance","Unity"],
+[129,"The Greek standard for proportion referring to the division of a line somewhere between one-half and one-third its length that is the most pleasing to the eye is the:","a","Golden mean","A floral design style","Golden rectangle","A floral container style"],
+[130,"Gradation, used to create rhythm, is:","a","A technique of placing flowers or foliage in a sequence","Repeating similar or slightly modified elements throughout a design","Branching out lines from a central location","A technique using varying textures"],
+[131,"Each of the following is an example of a form flower except:","d","Bird of Paradise","Protea","Anthurium","Rose"],
+[132,"Proper execution of the Principles of Design in your floral arrangements will make them more pleasing to look at.","T"],
+[133,"According to Principles of Design, larger, heavier flowers should be placed towards the base of the design.","T"],
+[134,"In Principles of Design, which term is described as the state of being one, united, or complete in itself?","b","Harmony","Unity","Composition","Balance"],
+[135,"In Principles of Design, which term is described as the wise selection of individual parts to form a floral composition?","a","Harmony","Unity","Composition","Balance"],
+[136,"Unity in floral design is best expressed through proximity, repetition, and transition.","T"],
+[137,"In Principles of Design, another word for transition is continuation.","T"],
+[138,"In Principles of Design, transition is achieved when some element of the floral design is repeated throughout the design to relate the parts to each other and the whole.","F"],
+[139,"In Principles of Design, proximity can be achieved by placing flowers close together.","T"],
+[140,"In Principles of Design, the quality of a floral arrangement that gives a sense of equilibrium and repose is referred to as:","a","Balance","Harmony","Proportion","Unity"],
+[141,"In Principles of Design, the term used to describe the relationship of one part of the floral design to the other parts as well as the whole is:","c","Balance","Scale","Proportion","Unity"],
+[142,"In Principles of Design, the relationship of the size of a composition to the surrounding area or environment is referred to as:","b","Balance","Scale","Proportion","Harmony"],
+[143,"According to Principles of Design, larger, heavier flowers should be placed towards the highest point of the design to achieve balance.","F"],
+[144,"Framing can be achieved by encircling the entire composition with a branch, line foliage, or other linear materials.","T"],
+[145,"Comparing the overall size of a floral design to the container in which it sits is an example of:","c","Balance","Scale","Proportion","Harmony"],
+[146,"The center of interest and visual activity in a floral design is referred to as:","b","Isolation","Focal point","Accent","Mass"],
+[147,"The word transition is defined as passing from one condition or form to another.","T"],
+[148,"Rhythm is easily expressed through the repetition of similar colors, shapes, textures, and lines.","T"],
+[149,"Asymmetrical balance is achieved when identical flowers and foliage are arranged and repeated in the same position on either side of an imaginary central vertical axis.","F"],
+[150,"Red, Orange, and Yellow are:","c","cool colors","representative of equality and respect","warm colors","the primary colors on the color wheel"],
+[151,"Blue, Green, and Violet are:","c","hot colors","representative of bravery and courage","cool colors","the secondary colors on the color wheel"],
+[152,"How many hues are on the color wheel?","c","3","9","12","36"],
+[153,"Intensity refers to:","b","certain hues","a color's brightness or dullness","whether a color is warm or cool","the value of the color"],
+[154,"All colors are derived from:","c","the rainbow","nature","light","hue"],
+[155,"This is measured by the amount of light that a color reflects or absorbs.","a","Value","Tint","Tone","Shade"],
+[156,"Created by combining one hue and the two colors on each side of its complementary color.","c","Complementary Color Scheme","Triadic Color Scheme","Split-Complementary Color Scheme","Analogous Color Scheme"],
+[157,"The result of combining a primary hue with a secondary hue.","c","Primary Color","Secondary Color","Intermediate (Tertiary) Color","Hue"],
+[158,"The colors made by combining the primary colors.","b","Primary Colors","Secondary Colors","Intermediate (Tertiary) Colors","Hues"],
+[159,"Name of a color in the color spectrum.","d","Primary Color","Secondary Color","Intermediate (Tertiary) Color","Hue"],
+[160,"The result of adding white to a hue.","a","Tint","Tone","Shade","Value"],
+[161,"The result of adding black to a hue.","c","Tint","Tone","Shade","Value"],
+[162,"The basic hues used to make all others on the color wheel.","a","Primary Colors","Secondary Colors","Complementary Colors","Intermediate (Tertiary) Colors"],
+[163,"A pair of hues directly opposite each other on the color wheel.","c","Primary Colors","Secondary Colors","Complementary Colors","Intermediate (Tertiary) Colors"],
+[164,"A grouping of three adjacent hues on the color wheel.","a","Analogous Color Scheme","Monochromatic Scheme","Split Complementary Scheme","Triadic Color Scheme"],
+[165,"A design that has various tints, tones, and shades of one hue.","b","Analogous Color Scheme","Monochromatic Scheme","Split Complementary Scheme","Triadic Color Scheme"],
+[166,"A design using three hues that are equal distances apart on the color wheel.","d","Analogous Color Scheme","Monochromatic Scheme","Split Complementary Scheme","Triadic Color Scheme"],
+[167,"The primary foundation of the design which creates a visual linear form.","a","Line","Unity","Size","Pattern"],
+[168,"Refers to the surface quality of the materials which appeal to sight, touch, or the mind (implied sight or touch).","c","Light","Space","Texture","Unity"],
+[169,"The natural or artificial illumination necessary for vision.","a","Light","Space","Texture","Unity"],
+[170,"The design formed by solids and spaces including plant materials, container, and any other components used.","a","Pattern","Texture","Form","Space"],
+[171,"Which of the following describes the element of color?","d","Refers to visual sensations","The character of the surface is a result of the response of vision to the wavelength of light reflected by the surface","Begins with and is derived from light","All of the above"],
+[172,"Which of the following describes the element of space?","d","The open area in and around the design","The three-dimensional expanse within which a design is organized","The use of voids or solids","All of the above"],
+[173,"Which of the following describes the element of form?","d","Three dimensional, more than simple two-dimensional shape or outline","Applies to both the overall design and individual components","Mass typifies closed and line typifies open","All of the above"],
+[174,"Uses equal amounts of color and form on either side of the central axis.","b","Harmony","Symmetrical Balance","Unity","Texture"],
+[175,"Which of the following is not a primary color on the color wheel?","c","Yellow","Blue","Green","Red"],
+[176,"Which of the following is not a secondary color on the color wheel?","a","Blue","Green","Orange","Violet"],
+[177,"Which are considered elements of design?","c","Paint, Brush, Easel, Paper","Rhythm, Dominance, Contrast","Line, Color, Texture, Shape, Space","Balance, Proportion, Scale"],
+[178,"An Element of Design that appears three-dimensional and encloses volume such as a cube, sphere, pyramid, or cylinder.","b","Line","Shape","Form","Value"],
+[179,"An Element of Design that is used to define space, contours, and outlines, or suggest mass and volume. Can be vertical, horizontal, crescent, or curved.","a","Line","Shape","Form","Value"],
+[180,"The surface quality of a design usually perceived through the sense of touch, which can also be implied or perceived visually.","d","Form","Value","Color","Texture"],
+[181,"An Element of Design in which an enclosed space is defined by other art elements such as line, color, and texture.","a","Form","Space","Line","Shape"],
+[182,"An Element of Design concerned with the degree of lightness of colors.","b","Form","Value","Color","Texture"],
+[183,"An Element of Design with three properties: hue, value, and intensity. Also, the character of surfaces created by the response of vision to wavelengths of reflected light.","b","Value","Color","Space","Texture"],
+[184,"What best describes space?","a","An Element of Design that refers to the area between, around and/or within components of the design","An Element of Design that is concerned with height and width of design","An Element of Design that is concerned with depth of design","An open break in the design that connects one area of positive shape with another"],
+[185,"What Element of Design is concerned with reflected light?","c","Contrast","Value","Color","Pattern"],
+[186,"This is another word for the brightness of a color.","a","Value","Intensity","Hue","Complementary"],
+[187,"This is an Element of Design that refers to the sense of touch.","c","Value","Pattern","Texture","Shape"],
+[188,"Creating a sense of visual oneness in a design is called:","c","Form","Value","Unity","Texture"],
+[189,"The Element of Design referring to the emptiness or area between, around, above, below and within objects:","d","Color","Shape","Form","Space"],
+[190,"Contrast can be created by using:","d","Smooth and rough textures","Large and small shapes","Plain areas against areas of patterns","All of the above"],
+[191,"Monochromatic refers to an arrangement done in several hues.","F"],
+[192,"Negative space is the empty areas in and around the flowers or materials.","T"],
+[193,"An analogous color scheme would be hues that are next to each other on the color wheel.","T"],
+[194,"Analogous color scheme is another term for complementary color scheme.","F"],
+[195,"Red and pink are examples of complementary colors.","F"],
+[196,"A color palette of red, yellow and blue is an example of a triad color scheme.","T"],
+[197,"Unity is obtained by repeating colors and shapes; all parts of a design are working together as a unified whole.","T"],
+[198,"Tints of colors may be created by adding white; for example, pink is a tint of the hue red.","T"],
+[199,"Value is an art element that means darkness or lightness of a surface.","F"],
+[200,"The foundation of any floral design is a stable and secure base.","T"],
+[201,"Mechanics used in a floral design do not need to be incorporated in the cost of the arrangement.","F"],
+[202,"The devices and techniques for keeping floral placement secure and stable in a design are known as mechanics.","T"],
+[203,"Glue guns and pan glue are used to attach dry floral foam or other non-perishable decor in various situations.","T"],
+[204,"Wet floral foam should be loose and able to move around in its container.","F"],
+[205,"A bouquet holder is designed to be used to hang flowers on an easel.","F"],
+[206,"Pew clips can be used on church benches to hang decorations for weddings or other events.","T"],
+[207,"Traditionally, a boutonniere is worn on the man's left side over his heart and attached with a pin or magnet.","T"],
+[208,"When gluing a fresh flower corsage, the best mechanic to use is hot glue or pan glue.","F"],
+[209,"When using wire in corsage work, the best gauge to use is #16.","F"],
+[210,"The higher the number in wire gauge, the thinner the diameter of the wire.","T"],
+[211,"Waterproof tape, also called bowl or anchor tape, is used to attach wet foam into containers for stability.","T"],
+[212,"Floral tape can be used instead of waterproof bowl tape or anchor tape.","F"],
+[213,"The most common size of ribbon used for a corsage is #40.","F"],
+[214,"Polyfoil is a material that consists of a layer of tissue paper and mylar.","F"],
+[215,"Greening pins are the best mechanic for attaching moss to a foam base.","T"],
+[216,"A wooden pick or skewer can be used to insert fresh fruit into a floral design.","T"],
+[217,"Fresh or silk flowers may be color enhanced with a delicate flower-safe dye or spray paint such as Design Master or Just for Flowers.","T"],
+[218,"When soaking floral foam:","b","It should be held down forcibly underwater","Allow it to float soak in a basin of water","Put it into a container and pour water over the foam","Use the foam dry and add water after arranging flowers in the foam"],
+[219,"A good method for binding evergreens to a wreath frame is to use:","c","Hot glue","Chenille Stems","Paddle wire","Steel picks"],
+[220,"An aqua tube or water pick is used:","d","As a water source for fresh flowers","To anchor a flower into a design that does not have a water source","To decorate a potted plant with fresh flowers","All of the above"],
+[221,"An easel is designed to hold:","d","A casket saddle","A bouquet holder","A corsage","A foam cage"],
+[222,"A kenzan or pin holder holds flower stems, but this mechanic secures the kenzan to its container:","b","Styrofoam","Floral clay or Stickum","Cable ties or Chenille Stems","Oasis cold glue"],
+[223,"When tying a bow with wire:","b","The ribbon should easily slip out of the wire","The wire must be twisted tightly","The wire must be smaller than 18 gauge","Use an uncoated or bare wire"],
+[224,"When inserting flower stems into floral foam, they:","d","should reach about 2 inches into the foam","need to have a fresh clean cut","will last longer if re-watered daily","all of the above"],
+[225,"Floral tape adhesive:","d","Is moisture resistant","Is paraffin-coated paper","Will cling to itself when stretched","All of the above"],
+[226,"Placing cold glue on the cut stem of a flower will:","a","seal the flower so it retains moisture","make the flower brown and bruise the petals","cause the flower to lose moisture","change the smell of the flower"],
+[227,"The weight of a wrist corsage:","b","is not important","should be light","should be heavy","depends on how much glue is used"],
+[228,"A common product designed to secure a boutonniere to the lapel of a man's jacket:","c","Safety pin","Corsage pin","Boutonniere pin","Bobby pin"],
+[229,"Which of the following products would not be used to create a grid in or on a glass vase?","c","Colored aluminum wire","Waterproof tape or chicken wire","Floral foam","Curly willow"],
+[230,"When using floral foam, the most effective product to secure it in place to the container for additional stability would be:","b","U-Glu adhesive strips or dashes","Waterproof tape","Stickum or floral clay","Cold glue"],
+[231,"When securing a hand-held bouquet there are many products that may be used. Which of the following would not be a good choice?","d","Bind wire","Chenille stem","Floral tape","Curling ribbon"],
+[232,"Which of the following is not a method to strengthen the stem of a flower?","c","Hook wiring","Insertion wiring","Stitch wiring","Pierce wiring"],
+[233,"When securing moss onto foam the most effective floral product would be:","a","Greening pins","Wired wooden picks","Anchor pins","Hyacinth stakes"],
+[234,"Which of the following ribbon sizes would be most commonly used when constructing a corsage?","a","#3","#5","#9","#16"],
+[235,"When establishing a secure foundation for a floral arrangement, the following may be used:","d","Armature or grid","Floral foam","Kenzan or pin holder","All of the above"],
+[236,"When constructing wreaths or garlands, the most typical choice of wire to secure foliage would be:","b","Aluminum wire","Paddle wire","Bullion wire","Beaded wire"],
+[237,"To secure ribbon on a hand-tied bouquet, which of the following decorative techniques should not be used?","b","Hold in place by inserting decorative pins vertically into stems","Hold in place by inserting decorative pins horizontally into stems","Use cold glue or U-Glu directly on stems","Use a decorative knot or braid"],
+[238,"The best method of adding preserved oak leaves to a fall arrangement would be to use:","b","Water picks","Wired wooden picks","Greening pins","Orchid tubes"],
+[239,"When constructing a boutonniere with green enameled wire, what product would not be an option used to disguise the mechanics?","a","Waterproof tape","Decorative wire","Floral tape","Ribbon"],
+[240,"If given the following options when constructing a corsage or boutonniere with wire, which would be the best gauge?","c","10 gauge","14 gauge","24 gauge","30 gauge"],
+[241,"Florist wire ranges in size. Of the sizes shown, what size is the thinnest?","d","16 gauge","18 gauge","24 gauge","30 gauge"],
+[242,"Dry floral foam and/or Styrofoam would be used for an arrangement made with:","a","Dried and silk flowers","Fresh flowers","Potted plants","Dish gardens"],
+[243,"Anchor pins are used to:","c","Hold a taper candle upright","Secure flowers in a low dish","Anchor foam in a container","All of the above"],
+[244,"In floral design, the term 'mechanics' refers to:","d","A visible part of the design","Keeping tools clean and in working order","The floral cooler thermometer and humidity gauge","The objects and methods used to fix materials in place"],
+[245,"Bundling, binding, banding, and wrapping are all techniques to:","b","Process flowers","Tie materials together","Grade Flowers","Adhere materials"],
+[246,"Single faced (acetate) ribbon is shiny on both sides.","F"],
+[247,"Metal containers with seams require a plastic (vinyl) liner because they may rust and it is unlikely they are watertight.","T"],
+[248,"Fresh floral foam may be dipped in a glue skillet and secured to a container prior to being hydrated.","T"],
+[249,"Until floral foams were introduced, armatures were the primary floral design mechanic for securing flowers.","T"],
+[250,"The best tool to cut green enameled florist wire is:","d","Bunch cutter","Ribbon scissors","Florist knife","Wire cutters"]
+];
+
+const CATS = [
+  {name:"Care & Handling of Cut Flowers", from:1, to:48},
+  {name:"History of Floral Design", from:49, to:99},
+  {name:"Principles of Design", from:100, to:149},
+  {name:"Elements of Design & Color", from:150, to:199},
+  {name:"Mechanics", from:200, to:250}
+];
+const catOf = n => CATS.findIndex(c => n>=c.from && n<=c.to);
+const LETTERS = "abcd";
+
+// Normalize bank into objects
+const QUESTIONS = BANK.map(r => {
+  const [num, text, ans, ...opts] = r;
+  if (opts.length === 0) return {num, text, opts:["True","False"], correct: ans==="T"?0:1, cat:catOf(num), tf:true};
+  return {num, text, opts, correct: LETTERS.indexOf(ans), cat:catOf(num), tf:false};
+});
+
+/* ---------- state ---------- */
+let pool=[], idx=0, answers=[], mode="practice", timerId=null, timeLeft=0;
+const $ = id => document.getElementById(id);
+
+/* ---------- setup ---------- */
+function buildCats(){
+  $("cats").innerHTML = CATS.map((c,i)=>{
+    const n = QUESTIONS.filter(q=>q.cat===i).length;
+    return `<label><input type="checkbox" class="catbox" value="${i}" checked> ${c.name}<span class="count">${n} Qs</span></label>`;
+  }).join("");
+  document.querySelectorAll(".catbox").forEach(b=>b.onchange=updateInfo);
+  updateInfo();
+}
+function selectedCats(){return [...document.querySelectorAll(".catbox:checked")].map(b=>+b.value);}
+function updateInfo(){
+  const n = QUESTIONS.filter(q=>selectedCats().includes(q.cat)).length;
+  $("poolInfo").textContent = n+" questions available";
+  $("startBtn").disabled = n===0;
+}
+$("allBtn").onclick=()=>{document.querySelectorAll(".catbox").forEach(b=>b.checked=true);updateInfo();};
+$("noneBtn").onclick=()=>{document.querySelectorAll(".catbox").forEach(b=>b.checked=false);updateInfo();};
+document.querySelectorAll("input[name=mode]").forEach(r=>r.onchange=()=>{
+  $("practiceOpts").style.display = r.value==="practice"&&r.checked ? "flex" : (document.querySelector("input[name=mode]:checked").value==="practice"?"flex":"none");
+});
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+$("startBtn").onclick=()=>{
+  mode = document.querySelector("input[name=mode]:checked").value;
+  let p = QUESTIONS.filter(q=>selectedCats().includes(q.cat));
+  if (mode==="contest"){ p = shuffle(p).slice(0,25); }
+  else {
+    if ($("shuffle").checked) p = shuffle(p);
+    const n = parseInt($("numQ").value);
+    if (n>0) p = p.slice(0,n);
+  }
+  startQuiz(p);
+};
+
+function startQuiz(p){
+  pool=p; idx=0; answers=new Array(p.length).fill(null);
+  $("setup").classList.add("hidden"); $("results").classList.add("hidden"); $("quiz").classList.remove("hidden");
+  clearInterval(timerId); $("timer").textContent="";
+  if (mode==="contest"){
+    timeLeft = 30*60; tick();
+    timerId = setInterval(()=>{timeLeft--; tick(); if(timeLeft<=0){clearInterval(timerId); finish();}},1000);
+  }
+  render();
+}
+function tick(){
+  const m=Math.floor(timeLeft/60), s=String(timeLeft%60).padStart(2,"0");
+  $("timer").textContent = "⏱ "+m+":"+s;
+  $("timer").classList.toggle("low", timeLeft<=120);
+}
+
+/* ---------- quiz ---------- */
+function render(){
+  const q = pool[idx], a = answers[idx];
+  $("counter").textContent = `Question ${idx+1} of ${pool.length}`;
+  $("bar").style.width = ((idx+1)/pool.length*100)+"%";
+  $("qcat").textContent = CATS[q.cat].name + " · #" + q.num;
+  $("qtext").textContent = q.text;
+  const locked = mode==="practice" && a!==null;
+  $("opts").innerHTML = q.opts.map((o,i)=>{
+    let cls="opt";
+    if (mode==="practice" && a!==null){ if(i===q.correct)cls+=" correct"; else if(i===a)cls+=" wrong"; }
+    else if (a===i) cls+=" sel";
+    const letter = q.tf ? "" : `<span class="letter">${LETTERS[i]}.</span>`;
+    return `<button class="${cls}" data-i="${i}" ${locked?"disabled":""}>${letter}${escapeHTML(o)}</button>`;
+  }).join("");
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>choose(+b.dataset.i));
+  const fb=$("fb");
+  if (mode==="practice" && a!==null){
+    const ok=a===q.correct; fb.className="feedback "+(ok?"good":"bad");
+    fb.textContent = ok ? "✓ Correct!" : "✗ Correct answer: "+(q.tf?"":LETTERS[q.correct]+". ")+q.opts[q.correct];
+  } else { fb.className="feedback"; fb.textContent=""; }
+  if (mode==="practice"){
+    const done=answers.filter(x=>x!==null).length, right=answers.filter((x,i)=>x===pool[i].correct).length;
+    $("liveScore").textContent = `${right}/${done} correct`;
+  } else {
+    $("liveScore").textContent = `${answers.filter(x=>x!==null).length}/${pool.length} answered`;
+  }
+  $("prevBtn").disabled = idx===0;
+  $("nextBtn").textContent = idx===pool.length-1 ? "Finish ✓" : "Next →";
+}
+function choose(i){
+  if (mode==="practice" && answers[idx]!==null) return;
+  answers[idx]=i; render();
+}
+$("prevBtn").onclick=()=>{if(idx>0){idx--;render();}};
+$("nextBtn").onclick=()=>{
+  if (idx<pool.length-1){idx++;render();}
+  else {
+    const blank=answers.filter(x=>x===null).length;
+    if (blank && !confirm(`${blank} question(s) unanswered. Finish anyway?`)) return;
+    finish();
+  }
+};
+$("quitBtn").onclick=()=>{ if(confirm("Quit and see results so far?")) finish(); };
+
+/* ---------- results ---------- */
+function finish(){
+  clearInterval(timerId);
+  $("quiz").classList.add("hidden"); $("results").classList.remove("hidden");
+  const right = answers.filter((a,i)=>a===pool[i].correct).length;
+  if (mode==="contest"){
+    $("finalScore").textContent = (right*4)+" / "+(pool.length*4);
+    $("finalSub").textContent = `${right} of ${pool.length} correct · ${Math.round(right/pool.length*100)}%`;
+  } else {
+    $("finalScore").textContent = Math.round(right/pool.length*100)+"%";
+    $("finalSub").textContent = `${right} of ${pool.length} correct`;
+  }
+  $("breakdown").innerHTML = CATS.map((c,ci)=>{
+    const qs = pool.map((q,i)=>({q,i})).filter(x=>x.q.cat===ci);
+    if(!qs.length) return "";
+    const r = qs.filter(x=>answers[x.i]===x.q.correct).length;
+    return `<div><span>${c.name}</span><b>${r}/${qs.length}</b></div>`;
+  }).join("");
+  const missed = pool.map((q,i)=>({q,a:answers[i]})).filter(x=>x.a!==x.q.correct);
+  $("retryMissed").style.display = missed.length ? "" : "none";
+  $("retryMissed").onclick=()=>{ mode="practice"; startQuiz(shuffle(missed.map(x=>x.q))); };
+  $("review").innerHTML = missed.length ? missed.map(({q,a})=>`
+    <div class="review-item">
+      <div class="q">#${q.num}. ${escapeHTML(q.text)}</div>
+      <div class="yours">Your answer: ${a===null?"(blank)":escapeHTML(q.opts[a])}</div>
+      <div class="ans">Correct: ${escapeHTML(q.opts[q.correct])}</div>
+    </div>`).join("") : "<p>Perfect — nothing missed! 🌷</p>";
+  window.scrollTo(0,0);
+}
+$("homeBtn").onclick=()=>{ $("results").classList.add("hidden"); $("setup").classList.remove("hidden"); };
+
+function escapeHTML(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+buildCats();
+</script>
+</body>
+</html>
